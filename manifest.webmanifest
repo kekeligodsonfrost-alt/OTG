@@ -1,0 +1,13 @@
+{
+  "name": "One Second Games",
+  "short_name": "1s Games",
+  "description": "Tiny games. Huge scores.",
+  "start_url": "./#home",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#10131d",
+  "theme_color": "#10131d",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
