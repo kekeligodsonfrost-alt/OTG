@@ -109,5 +109,5 @@ const more = [
 core.push(...more);
 
 export const categories = ['All','Reaction','Memory','Accuracy','Math','Vision','Speed','Luck','Logic','Arcade','Fun'];
-export const games = core.map(([id,title,category,icon,description,mode,instructions],i)=>({id,title,category,icon,description,mode,instructions,difficulty:'Normal',accent:['#ceff59','#a696ff','#7ee7e4','#ff7b9b'][i%4],featured:i<8}));
+export const games = core.map(([id,title,category,icon,description,mode,instructions],i)=>({id,title,category,icon,description,mode,instructions,difficulty:'Normal',accent:['#5fe5ff','#a696ff','#7ee7e4','#609bff'][i%4],featured:i<8}));
 export const gameById = id => games.find(game=>game.id===id);

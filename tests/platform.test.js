@@ -44,6 +44,7 @@ test('local score and favorite data survive a blocked-storage fallback', () => {
     store.record(beta, { score: 42, elapsed: 800 });
     assert.equal(store.best(alpha.id), 321);
     assert.equal(store.best(beta.id), 42);
+    assert.equal(store.get().scores[alpha.id].lastScore, 321);
     assert.equal(store.favorite(alpha.id), true);
     assert.equal(store.get().favorites.includes(alpha.id), true);
     assert.equal(store.get().stats.bestReactionTime, 240);

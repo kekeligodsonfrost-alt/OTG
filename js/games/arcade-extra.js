@@ -1,3 +1,5 @@
+import { startCountdown } from '../lib/countdown.js';
+
 const extraModes = new Set([
   'dodge', 'meteorDodge', 'catchCoin', 'avoidBomb', 'miniPong', 'miniFlappy',
   'jumpNow', 'laneSwitch', 'coinDash', 'laserEscape'
@@ -18,6 +20,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
   let timer = 0;
   let handler = null;
   let score = 0;
+  let countdownCancel = null;
   const listeners = [];
   const held = new Set();
 
@@ -28,6 +31,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
   const cleanup = () => {
     if (!alive) return;
     alive = false;
+    countdownCancel?.();
     cancelAnimationFrame(raf);
     clearInterval(timer);
     listeners.splice(0).forEach(remove => remove());
@@ -38,7 +42,6 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
     complete = true;
     const elapsed = Math.max(0, performance.now() - startedAt);
     cleanup();
-    sound(points ? 'success' : 'fail');
     finish({ score: Math.max(0, Math.round(points)), elapsed, perfect: false, ...extra });
   };
   const startView = () => {
@@ -47,11 +50,18 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
     panel.querySelector('#extra-arcade-start').addEventListener('click', start, { once: true });
   };
   const start = () => {
-    if (!alive || startedAt) return;
-    startedAt = performance.now();
-    sound('tap');
-    onStart(game.category);
-    play();
+    if (!alive || startedAt || countdownCancel) return;
+    sound('click');
+    countdownCancel = startCountdown({
+      panel,
+      sound,
+      onStart: () => onStart(game.category),
+      onGo: () => {
+        countdownCancel = null;
+        startedAt = performance.now();
+        play();
+      },
+    });
   };
   const mountCanvas = (width = 520, height = 320, info = 'STAY ALIVE') => {
     panel.classList.add('playing');
@@ -159,7 +169,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
       ctx.strokeStyle = '#ffffff12'; ctx.lineWidth = 1;
       for (let x = 40; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
       hazards.forEach(h => { ctx.fillStyle = meteors ? '#ff7b9b' : '#ffbd67'; ctx.beginPath(); ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffffff50'; ctx.beginPath(); ctx.arc(h.x - h.r * .25, h.y - h.r * .25, h.r * .24, 0, Math.PI * 2); ctx.fill(); });
-      ctx.fillStyle = '#ceff59'; ctx.beginPath(); ctx.arc(player.x, player.y, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#5fe5ff'; ctx.beginPath(); ctx.arc(player.x, player.y, 13, 0, Math.PI * 2); ctx.fill();
       if (meteors) { ctx.fillStyle = '#ff7b9b'; ctx.font = '12px monospace'; ctx.fillText('METEOR FIELD', 18, 24); }
     };
     raf = requestAnimationFrame(loop);
@@ -192,7 +202,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
       setScore(caught * 100); setInfo(`COINS ${caught} · ${(20 - elapsed).toFixed(1)}s`);
       background(ctx, W, H);
       ctx.fillStyle = '#ffffff16'; for (let i = 0; i < 8; i++) ctx.fillRect(i * 70 + 15, 0, 1, H);
-      items.forEach(item => { ctx.fillStyle = item.bomb ? '#ff526b' : '#ceff59'; ctx.beginPath(); ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = item.bomb ? '#3b111c' : '#81601e'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(item.bomb ? '!' : '$', item.x, item.y); });
+      items.forEach(item => { ctx.fillStyle = item.bomb ? '#ff526b' : '#5fe5ff'; ctx.beginPath(); ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = item.bomb ? '#3b111c' : '#81601e'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(item.bomb ? '!' : '$', item.x, item.y); });
       roundedRect(ctx, player.x - player.width / 2, player.y - 10, player.width, 17, '#7ee7e4', 8);
       ctx.fillStyle = '#10131d'; ctx.fillRect(player.x - 15, player.y - 4, 30, 4);
     };
@@ -226,7 +236,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
       setScore(rebounds * 100); setInfo(`RALLIES ${rebounds} · ${(30 - elapsed).toFixed(0)}s`);
       background(ctx, W, H);
       ctx.strokeStyle = '#ffffff22'; ctx.setLineDash([5, 9]); ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke(); ctx.setLineDash([]);
-      roundedRect(ctx, paddle.x - paddle.w / 2, paddle.y, paddle.w, paddle.h, '#ceff59', 6);
+      roundedRect(ctx, paddle.x - paddle.w / 2, paddle.y, paddle.w, paddle.h, '#5fe5ff', 6);
       ctx.fillStyle = '#7ee7e4'; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#9ca5b9'; ctx.font = '12px monospace'; ctx.textAlign = 'center'; ctx.fillText('MOVE PADDLE · KEEP IT BOUNCING', W / 2, 26);
     };
@@ -258,7 +268,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
       background(ctx, W, H);
       ctx.fillStyle = '#182336'; ctx.fillRect(0, 0, W, H);
       pipes.forEach(p => { roundedRect(ctx, p.x, 0, 48, p.gapTop, '#7ee7e4', 5); roundedRect(ctx, p.x, p.gapBottom, 48, H - p.gapBottom, '#7ee7e4', 5); });
-      ctx.fillStyle = '#ceff59'; ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#5fe5ff'; ctx.beginPath(); ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#10131d'; ctx.beginPath(); ctx.arc(bird.x + 4, bird.y - 3, 2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#ffffff70'; ctx.font = '12px monospace'; ctx.fillText('FLAP THROUGH THE GAPS', 18, 24);
     };
@@ -287,7 +297,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
       setScore(elapsed * 55); setInfo(`DISTANCE ${Math.floor(elapsed * 55)} · ${Math.floor(30 - elapsed)}s`);
       background(ctx, W, H); ctx.fillStyle = '#202945'; ctx.fillRect(0, 0, W, ground); ctx.fillStyle = '#b9d7ed'; ctx.fillRect(0, ground, W, H - ground);
       ctx.fillStyle = '#ffffff28'; for (let i = 0; i < 7; i++) ctx.fillRect((i * 83 - elapsed * speed * .3 % 83), 72 + i % 3 * 38, 32, 2);
-      roundedRect(ctx, px, py, 26, 31, '#ceff59', 7);
+      roundedRect(ctx, px, py, 26, 31, '#5fe5ff', 7);
       obstacles.forEach(o => roundedRect(ctx, o.x, ground - o.h, o.w, o.h, '#ff7b9b', 5));
     };
     raf = requestAnimationFrame(loop);
@@ -314,7 +324,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
       setScore(dodged * 100); setInfo(`CLEARED ${dodged} · ${(25 - elapsed).toFixed(0)}s`);
       background(ctx, W, H); ctx.fillStyle = '#ffffff10'; for (const x of lanes) { ctx.fillRect(x - 1, 0, 2, H); }
       hazards.forEach(h => roundedRect(ctx, lanes[h.lane] - 20, h.y, 40, 27, '#ff7b9b', 7));
-      ctx.fillStyle = '#ceff59'; ctx.beginPath(); ctx.moveTo(lanes[lane], H - 49); ctx.lineTo(lanes[lane] - 17, H - 20); ctx.lineTo(lanes[lane] + 17, H - 20); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#5fe5ff'; ctx.beginPath(); ctx.moveTo(lanes[lane], H - 49); ctx.lineTo(lanes[lane] - 17, H - 20); ctx.lineTo(lanes[lane] + 17, H - 20); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#9ca5b9'; ctx.font = '12px monospace'; ctx.textAlign = 'center'; ctx.fillText('THREE LANES · KEEP A CLEAR PATH', W / 2, 24);
     };
     raf = requestAnimationFrame(loop);
@@ -341,7 +351,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
       if (elapsed >= 20) { end(caught * 100, { coins: caught, seconds: 20, perfect: caught >= 12 }); return; }
       setScore(caught * 100); setInfo(`COINS ${caught} · ${(20 - elapsed).toFixed(1)}s`);
       background(ctx, W, H); ctx.strokeStyle = '#ffffff0d'; for (let x = 20; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-      ctx.fillStyle = '#ceff59'; ctx.beginPath(); ctx.arc(coin.x, coin.y, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#705924'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', coin.x, coin.y);
+      ctx.fillStyle = '#5fe5ff'; ctx.beginPath(); ctx.arc(coin.x, coin.y, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#705924'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', coin.x, coin.y);
       ctx.fillStyle = '#7ee7e4'; ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.fill();
     };
     raf = requestAnimationFrame(loop);
@@ -380,7 +390,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
         const color = isHazard ? (phase === 'warning' ? '#9a682e' : '#e34161') : '#202638';
         roundedRect(ctx, ox + x * cell + 4, oy + y * cell + 4, cell - 8, cell - 8, color, 9);
       }
-      ctx.fillStyle = '#ceff59'; ctx.beginPath(); ctx.arc(ox + player.x * cell + cell / 2, oy + player.y * cell + cell / 2, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#5fe5ff'; ctx.beginPath(); ctx.arc(ox + player.x * cell + cell / 2, oy + player.y * cell + cell / 2, 15, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#9ca5b9'; ctx.font = '12px monospace'; ctx.textAlign = 'center'; ctx.fillText(phase === 'warning' ? 'AMBER ROW / COLUMN WILL FIRE' : 'LASER FIRING', W / 2, 22);
       ctx.textAlign = 'left'; ctx.fillText(`PULSES ${pulse} / 7`, 18, H - 12);
     };
