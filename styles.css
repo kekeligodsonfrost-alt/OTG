@@ -74,3 +74,9 @@
 @media(max-width:680px){#seo-game-list{columns:1}.seo-fallback{padding:25px 0 50px}.seo-fallback p{font-size:15px}.icon-button{width:44px;height:44px}.top-actions{gap:3px}.chip{padding:9px 12px}.game-panel.playing{overscroll-behavior:contain}.game-panel.countdown-panel{min-height:390px}.result-actions .button{min-height:48px}}
 @media(max-width:390px){.topbar{padding:0 10px}.main-nav{gap:8px}.top-actions{gap:2px}.icon-button{width:42px;height:42px;min-width:42px;min-height:42px}}
 @media(prefers-reduced-motion:reduce){.countdown-number,.countdown-go,.game-panel.feedback-hit,.game-panel.feedback-miss,.game-panel.result-panel,.result-score{animation:none!important}.input-ripple{display:none}.progress-track span{transition:none}}
+
+/* Touch-only arcade controls. */
+.touch-controls-mobile{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0 max(12px,env(safe-area-inset-bottom));}
+.touch-controls-mobile button{min-width:52px;min-height:52px;padding:8px 13px;border-radius:14px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font-size:18px;touch-action:manipulation;}
+.touch-controls-mobile button:focus-visible{outline:3px solid var(--violet);outline-offset:3px;}
+@media(max-width:680px){.canvas-game{max-width:100%;max-height:min(62vh,520px);object-fit:contain}.touch-controls-mobile{gap:12px;margin-top:14px;}}
