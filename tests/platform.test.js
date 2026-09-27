@@ -53,3 +53,6 @@ test('local score and favorite data survive a blocked-storage fallback', () => {
     else delete globalThis.localStorage;
   }
 });
+
+import { isReverseDirection, swipeDirection, supportsTouchInput } from '../js/lib/touch.js';
+test('touch input is capability-based and snake swipes map to cardinal directions',()=>{assert.equal(supportsTouchInput({maxTouchPoints:0,coarsePointer:false}),false);assert.equal(supportsTouchInput({maxTouchPoints:1,coarsePointer:false}),true);assert.equal(supportsTouchInput({maxTouchPoints:0,coarsePointer:true}),true);assert.deepEqual(swipeDirection(0,-50),{x:0,y:-1});assert.deepEqual(swipeDirection(0,50),{x:0,y:1});assert.deepEqual(swipeDirection(-50,0),{x:-1,y:0});assert.deepEqual(swipeDirection(50,0),{x:1,y:0});assert.equal(swipeDirection(6,4),null);assert.equal(isReverseDirection({x:1,y:0},{x:-1,y:0}),true);assert.equal(isReverseDirection({x:0,y:1},{x:0,y:-1}),true);assert.equal(isReverseDirection({x:1,y:0},{x:0,y:-1}),false)});

@@ -80,3 +80,6 @@
 .touch-controls-mobile button{min-width:52px;min-height:52px;padding:8px 13px;border-radius:14px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font-size:18px;touch-action:manipulation;}
 .touch-controls-mobile button:focus-visible{outline:3px solid var(--violet);outline-offset:3px;}
 @media(max-width:680px){.canvas-game{max-width:100%;max-height:min(62vh,520px);object-fit:contain}.touch-controls-mobile{gap:12px;margin-top:14px;}}
+
+.touch-controls{display:none}
+.touch-controls-mobile{display:flex}

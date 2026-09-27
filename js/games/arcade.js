@@ -1,5 +1,6 @@
 import { isExtraArcadeMode, mountExtraArcade } from './arcade-extra.js';
 import { startCountdown } from '../lib/countdown.js';
+import { isReverseDirection, swipeDirection, supportsTouchInput } from '../lib/touch.js';
 
 const pieces=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];
 const colors=['#5fe5ff','#7ee7e4','#a696ff','#ff7b9b','#77a8ff','#ffbd67','#d288ff'];
@@ -13,15 +14,15 @@ export function mountArcade({panel,game,finish,sound,onStart=()=>{}}){
  function run(){if(dead||last||countdownCancel)return;sound('click');countdownCancel=startCountdown({panel,sound,onStart:()=>onStart(game.category),onGo:()=>{countdownCancel=null;last=performance.now();if(game.mode==='snake')snake();else if(game.mode==='blocks')blocks();else runner()}})}
  function mountCanvas(width,height){panel.classList.add('playing');panel.innerHTML=`<div class="game-hud"><span id="arc-score">SCORE 0</span><span id="arc-info">${game.mode==='blocks'?'LINES 0':'STAY ALIVE'}</span></div><canvas class="canvas-game" width="${width}" height="${height}" style="width:min(${width}px,100%);height:auto" aria-label="${game.title} playfield"></canvas><div class="touch-controls" id="touch-controls"></div>`;return panel.querySelector('canvas')}
  function updateScore(){const el=panel.querySelector('#arc-score');if(el)el.textContent=`SCORE ${Math.floor(score)}`}
- const touchDevice=()=>Boolean(navigator.maxTouchPoints>0||window.matchMedia('(pointer: coarse)').matches);
+ const touchDevice=()=>supportsTouchInput({maxTouchPoints:navigator.maxTouchPoints,coarsePointer:window.matchMedia('(pointer: coarse)').matches});
  function controls(items){if(!touchDevice())return;const box=panel.querySelector('#touch-controls');if(!box)return;box.classList.add('touch-controls-mobile');items.forEach(([text,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.setAttribute('aria-label',text);b.onclick=fn;box.append(b)})}
  function snake(){const c=mountCanvas(400,400),ctx=c.getContext('2d'),cell=20,N=20;let body=[{x:8,y:10},{x:7,y:10},{x:6,y:10}],dir={x:1,y:0},queued={x:1,y:0},fruit;
   const fruitPlace=()=>{const free=[];for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(!body.some(p=>p.x===x&&p.y===y))free.push({x,y});if(!free.length){end(score,{fruit:score/10,boardCleared:true,perfect:true});return false}fruit=free[Math.floor(Math.random()*free.length)];return true};fruitPlace();
-  const turn=(d)=>{if(dir.x+d.x===0&&dir.y+d.y===0)return;queued=d};
+  const turn=(d)=>{if(isReverseDirection(dir,d))return;queued=d};
   let swipeStart=null;
   c.style.touchAction='none';
   c.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse')return;swipeStart={x:event.clientX,y:event.clientY};event.preventDefault()},{passive:false});
-  c.addEventListener('pointerup',event=>{if(!swipeStart||event.pointerType==='mouse')return;const dx=event.clientX-swipeStart.x,dy=event.clientY-swipeStart.y;swipeStart=null;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;if(Math.abs(dx)>Math.abs(dy))turn({x:Math.sign(dx),y:0});else turn({x:0,y:Math.sign(dy)})});
+  c.addEventListener('pointerup',event=>{if(!swipeStart||event.pointerType==='mouse')return;const dx=event.clientX-swipeStart.x,dy=event.clientY-swipeStart.y;swipeStart=null;const direction=swipeDirection(dx,dy);if(direction)turn(direction)});
   c.addEventListener('pointercancel',()=>{swipeStart=null});
   handler=e=>{const k=e.key.toLowerCase();if(['arrowup','w'].includes(k))turn({x:0,y:-1});else if(['arrowdown','s'].includes(k))turn({x:0,y:1});else if(['arrowleft','a'].includes(k))turn({x:-1,y:0});else if(['arrowright','d'].includes(k))turn({x:1,y:0});else return;e.preventDefault()};window.addEventListener('keydown',handler);
   controls([['↑',()=>turn({x:0,y:-1})],['←',()=>turn({x:-1,y:0})],['↓',()=>turn({x:0,y:1})],['→',()=>turn({x:1,y:0})]]);

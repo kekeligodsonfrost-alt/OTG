@@ -1,4 +1,5 @@
 import { startCountdown } from '../lib/countdown.js';
+import { supportsTouchInput } from '../lib/touch.js';
 
 const extraModes = new Set([
   'dodge', 'meteorDodge', 'catchCoin', 'avoidBomb', 'miniPong', 'miniFlappy',
@@ -7,6 +8,7 @@ const extraModes = new Set([
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const rand = (limit) => Math.floor(Math.random() * limit);
+const touchDevice = () => supportsTouchInput({ maxTouchPoints: navigator.maxTouchPoints, coarsePointer: window.matchMedia('(pointer: coarse)').matches });
 
 export function isExtraArcadeMode(mode) {
   return extraModes.has(mode);
@@ -65,7 +67,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
   };
   const mountCanvas = (width = 520, height = 320, info = 'STAY ALIVE') => {
     panel.classList.add('playing');
-    panel.innerHTML = `<div class="game-hud"><span id="extra-score">SCORE 0</span><span id="extra-info">${info}</span></div><canvas class="canvas-game" width="${width}" height="${height}" style="width:min(${width}px,100%);height:auto" aria-label="${game.title} playfield"></canvas><div class="touch-controls" id="extra-controls"></div>`;
+    panel.innerHTML = `<div class="game-hud"><span id="extra-score">SCORE 0</span><span id="extra-info">${info}</span></div><canvas class="canvas-game" width="${width}" height="${height}" style="width:min(${width}px,100%);height:auto" aria-label="${game.title} playfield"></canvas><div class="touch-controls${touchDevice() ? ' touch-controls-mobile' : ''}" id="extra-controls"></div>`;
     return { canvas: panel.querySelector('canvas'), ctx: panel.querySelector('canvas').getContext('2d'), width, height };
   };
   const setScore = value => {
@@ -78,6 +80,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
     if (el) el.textContent = value;
   };
   const button = (label, onClick) => {
+    if (!touchDevice()) return null;
     const el = document.createElement('button');
     el.type = 'button';
     el.textContent = label;
@@ -88,6 +91,7 @@ export function mountExtraArcade({ panel, game, finish, sound, onStart = () => {
   };
   const holdButton = (label, key) => {
     const el = button(label, () => {});
+    if (!el) return;
     const down = event => { event.preventDefault(); held.add(key); };
     const up = () => held.delete(key);
     listen(el, 'pointerdown', down);
