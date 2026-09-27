@@ -83,3 +83,6 @@
 
 .touch-controls{display:none}
 .touch-controls-mobile{display:flex}
+
+.score-breakdown{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 6px;color:var(--muted);font:11px 'DM Mono',monospace;letter-spacing:.08em}
+.score-breakdown .speed-bonus{color:var(--lime);font-weight:700;text-shadow:0 0 16px #5fe5ff55}
