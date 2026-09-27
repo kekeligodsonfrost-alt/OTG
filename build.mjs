@@ -20,7 +20,7 @@ const pageTitle = 'One Second Games | Free Quick Browser Mini-Games';
 const pageDescription = 'Play 103 free browser mini-games: reflex tests, memory and math challenges, visual puzzles, and quick arcade games. No account or download required.';
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const escapeJsonForHtml = value => JSON.stringify(value).replace(/</g, '\\u003c');
-const configuredSiteUrl = process.env.PUBLIC_SITE_URL || process.env.URL || '';
+const configuredSiteUrl = process.env.PUBLIC_SITE_URL || 'https://one-second-games.netlify.app';
 let siteUrl = '';
 if (configuredSiteUrl) {
   const parsed = new URL(configuredSiteUrl);
@@ -91,18 +91,65 @@ html = html.replace('<!-- SITE_STRUCTURED_DATA -->', structuredData);
 html = html.replace(/<title>[^<]*<\/title>/, `<title>${pageTitle}</title>`);
 await writeFile(outputIndex, html);
 
+const pageTemplate = game => {
+  const canonical = `${siteUrl}/games/${game.id}/`;
+  const title = `${game.title} | Free ${game.category} Browser Game`;
+  const description = `${game.description} ${game.instructions} Play ${game.title} free in your browser at One Second Games.`;
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoGame',
+    name: game.title,
+    description,
+    genre: game.category,
+    gamePlatform: 'Web browser',
+    playMode: 'SinglePlayer',
+    url: canonical,
+  };
+  return `<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(title)}</title>
+  <meta name="description" content="${escapeHtml(description)}">
+  <link rel="canonical" href="${escapeHtml(canonical)}">
+  <meta property="og:type" content="website"><meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(canonical)}">
+  <meta property="og:image" content="${siteUrl}/assets/social-card.png">
+  <link rel="stylesheet" href="/styles.css?v=seo-arcade-2"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <script type="application/ld+json">${escapeJsonForHtml(data)}</script>
+</head><body>
+  <main class="seo-game-page" style="max-width:760px;margin:12vh auto;padding:24px;font:inherit">
+    <p class="eyebrow">${escapeHtml(game.category)} · FREE BROWSER GAME</p>
+    <h1>${escapeHtml(game.title)}</h1>
+    <p>${escapeHtml(game.description)}</p>
+    <h2>How to play</h2><p>${escapeHtml(game.instructions)}</p>
+    <p><a class="button primary" href="/#games/${escapeHtml(game.id)}">Play ${escapeHtml(game.title)}</a></p>
+    <p><a href="/#games">Browse all 103 free games</a> · <a href="/">One Second Games home</a></p>
+  </main>
+</body></html>\n`;
+};
+
+const validGameId = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+for (const game of games) {
+  if (!validGameId.test(game.id)) throw new Error(`Invalid game URL id: ${game.id}`);
+  const gameOutput = resolve(output, 'games', game.id, 'index.html');
+  await mkdir(resolve(output, 'games', game.id), { recursive: true });
+  await writeFile(gameOutput, pageTemplate(game));
+}
+
 const robots = [
   'User-agent: OAI-SearchBot',
   'Allow: /',
   '',
   'User-agent: *',
   'Allow: /',
-  ...(siteUrl ? ['', `Sitemap: ${siteUrl}/sitemap.xml`] : []),
+  '',
+  `Sitemap: ${siteUrl}/sitemap.xml`,
   '',
 ].join('\n');
 await writeFile(resolve(output, 'robots.txt'), robots);
-const sitemapEntries = siteUrl ? `<url><loc>${siteUrl}/</loc></url>` : '';
+const sitemapLocations = [`${siteUrl}/`, ...games.map(game => `${siteUrl}/games/${game.id}/`)];
+const sitemapEntries = sitemapLocations.map(location => `<url><loc>${escapeHtml(location)}</loc></url>`).join('');
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${sitemapEntries}</urlset>\n`;
 await writeFile(resolve(output, 'sitemap.xml'), sitemap);
 await writeFile(resolve(output, '_redirects'), '/* /index.html 200\n');
-console.log(`Built ${games.length} game entries in ${output}${siteUrl ? ` for ${siteUrl}` : ' (set PUBLIC_SITE_URL to emit canonical URLs)'}`);
+console.log(`Built ${games.length} game landing pages and ${sitemapLocations.length} sitemap URLs in ${output} for ${siteUrl}`);
