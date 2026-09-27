@@ -1,6 +1,6 @@
 # One Second Games
 
-A no-build, no-dependency browser game platform with 103 playable games. Game sessions, records, preferences, daily challenges, and music run in the browser; there is no account, backend, paid service, or external audio request.
+A lightweight browser game platform with 104 playable games. Game sessions, records, preferences, daily challenges, and music run in the browser; there is no account, backend, paid service, or external audio request.
 
 ## Run locally
 
@@ -31,7 +31,7 @@ Every catalog entry has its own ID, instructions, and playable mechanic. There a
 
 - `index.html`, `styles.css`: semantic app shell, responsive design, themes, and shared game UI.
 - `js/main.js`: hash routing, home/library/stats views, results, daily challenge, favorites, sharing, and tab lifecycle.
-- `js/games/registry.js`: the 103 game definitions and categories.
+- `js/games/registry.js`: the 104 game definitions and categories.
 - `js/games/core.js`: original short-form games and shared lifecycle for prompt games.
 - `js/games/extended/`: distinct mechanics grouped by reaction, accuracy, vision, memory, math/logic, and fun.
 - `js/games/arcade.js`, `js/games/arcade-extra.js`: Snake, falling-block puzzle, runner, and ten Canvas arcade games with keyboard/touch input.

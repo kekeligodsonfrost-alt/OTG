@@ -6,7 +6,7 @@ import { store } from '../js/lib/storage.js';
 import { dailyOrder } from '../js/lib/daily.js';
 
 test('game registry has unique, complete playable definitions', () => {
-  assert.equal(games.length, 103);
+  assert.equal(games.length, 104);
   assert.equal(new Set(games.map(game => game.id)).size, games.length);
   for (const game of games) {
     assert.ok(game.id && game.title && game.description && game.instructions && game.mode);
@@ -15,13 +15,21 @@ test('game registry has unique, complete playable definitions', () => {
 });
 
 test('every catalog arcade game routes to an implemented arcade module', async () => {
-  const originalModes = new Set(['snake', 'blocks', 'runner']);
+  const originalModes = new Set(['snake', 'blocks', 'runner', 'edgeSurf']);
   const arcadeGames = games.filter(game => game.category === 'Arcade');
-  assert.equal(arcadeGames.length, 13);
+  assert.equal(arcadeGames.length, 14);
   for (const game of arcadeGames) {
     assert.ok(originalModes.has(game.mode) || isExtraArcadeMode(game.mode), `${game.title} has no arcade handler`);
   }
   await import('../js/games/core.js');
+});
+
+test('Edge Surf is a playable, discoverable featured game', async () => {
+  const surf = games.find(game => game.id === 'edge-surf');
+  assert.ok(surf);
+  assert.equal(surf.mode, 'edgeSurf');
+  assert.equal(surf.popular, true);
+  assert.equal(typeof (await import('../js/games/edge-surf.js')).mountEdgeSurf, 'function');
 });
 
 test('daily game order is stable, unique, and contains ten games', () => {

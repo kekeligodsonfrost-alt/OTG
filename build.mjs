@@ -17,7 +17,7 @@ const files = [
   'js',
 ];
 const pageTitle = 'One Second Games | Free Quick Browser Mini-Games';
-const pageDescription = 'Play 103 free browser mini-games: reflex tests, memory and math challenges, visual puzzles, and quick arcade games. No account or download required.';
+const pageDescription = `Play ${games.length} free browser mini-games: reflex tests, memory and math challenges, visual puzzles, and quick arcade games. No account or download required.`;
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const escapeJsonForHtml = value => JSON.stringify(value).replace(/</g, '\\u003c');
 const configuredSiteUrl = process.env.PUBLIC_SITE_URL || 'https://one-second-games.netlify.app';
@@ -35,7 +35,7 @@ for (const file of files) {
 }
 
 const gameList = categories.filter(category => category !== 'All').map(category => {
-  const entries = games.filter(game => game.category === category).map(game => `<li><strong>${escapeHtml(game.title)}</strong> — ${escapeHtml(game.description)}</li>`).join('');
+  const entries = games.filter(game => game.category === category).map(game => `<li><a href="/games/${escapeHtml(game.id)}/">${escapeHtml(game.title)}</a> — ${escapeHtml(game.description)}</li>`).join('');
   return `<section><h3>${escapeHtml(category)} games</h3><ul>${entries}</ul></section>`;
 }).join('');
 const gameListTarget = '<div id="seo-game-list"></div>';
@@ -89,6 +89,10 @@ const structuredData = `<script type="application/ld+json">${escapeJsonForHtml({
 html = html.replace('<!-- SITE_ORIGIN_METADATA -->', originMetadata);
 html = html.replace('<!-- SITE_STRUCTURED_DATA -->', structuredData);
 html = html.replace(/<title>[^<]*<\/title>/, `<title>${pageTitle}</title>`);
+html = html.replace(/(<meta name="description" content=")[^"]*(">)/, `$1${pageDescription}$2`);
+html = html.replace(/(<meta property="og:description" content=")[^"]*(">)/, `$1${pageDescription}$2`);
+html = html.replace(/(<meta name="twitter:description" content=")[^"]*(">)/, `$1${pageDescription}$2`);
+html = html.replace(/103 free browser mini-games/g, `${games.length} free browser mini-games`);
 await writeFile(outputIndex, html);
 
 const pageTemplate = game => {
@@ -114,6 +118,8 @@ const pageTemplate = game => {
   <meta property="og:type" content="website"><meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(canonical)}">
   <meta property="og:image" content="${siteUrl}/assets/social-card.png">
+  <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(description)}"><meta name="twitter:image" content="${siteUrl}/assets/social-card.png">
   <link rel="stylesheet" href="/styles.css?v=seo-arcade-2"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <script type="application/ld+json">${escapeJsonForHtml(data)}</script>
 </head><body>
@@ -123,7 +129,8 @@ const pageTemplate = game => {
     <p>${escapeHtml(game.description)}</p>
     <h2>How to play</h2><p>${escapeHtml(game.instructions)}</p>
     <p><a class="button primary" href="/#games/${escapeHtml(game.id)}">Play ${escapeHtml(game.title)}</a></p>
-    <p><a href="/#games">Browse all 103 free games</a> · <a href="/">One Second Games home</a></p>
+    <h2>More ${escapeHtml(game.category)} games</h2><ul>${games.filter(other => other.category === game.category && other.id !== game.id).slice(0,4).map(other => `<li><a href="/games/${escapeHtml(other.id)}/">${escapeHtml(other.title)}</a> — ${escapeHtml(other.description)}</li>`).join('')}</ul>
+    <p><a href="/#games">Browse all ${games.length} free games</a> · <a href="/">One Second Games home</a></p>
   </main>
 </body></html>\n`;
 };
@@ -151,5 +158,6 @@ const sitemapLocations = [`${siteUrl}/`, ...games.map(game => `${siteUrl}/games/
 const sitemapEntries = sitemapLocations.map(location => `<url><loc>${escapeHtml(location)}</loc></url>`).join('');
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${sitemapEntries}</urlset>\n`;
 await writeFile(resolve(output, 'sitemap.xml'), sitemap);
-await writeFile(resolve(output, '_redirects'), '/* /index.html 200\n');
+await writeFile(resolve(output, '_redirects'), '/* /404.html 404\n');
+await writeFile(resolve(output, '404.html'), `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Page not found | One Second Games</title><link rel="stylesheet" href="/styles.css"></head><body><main class="seo-game-page" style="max-width:720px;margin:15vh auto;padding:24px"><p class="eyebrow">404 · OUT OF BOUNDS</p><h1>That page isn’t in the game library.</h1><p>Head back to One Second Games or browse the game collection.</p><p><a class="button primary" href="/">Go to homepage</a> <a class="button secondary" href="/#games">Browse games</a></p></main></body></html>`);
 console.log(`Built ${games.length} game landing pages and ${sitemapLocations.length} sitemap URLs in ${output} for ${siteUrl}`);

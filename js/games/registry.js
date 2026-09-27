@@ -107,7 +107,8 @@ const more = [
   ['one-chance','One Chance','Fun','🎲','One random mini-challenge. No second attempt.','oneChance','Read the one-off challenge and make your single choice.']
 ];
 core.push(...more);
+core.unshift(['edge-surf','Edge Surf','Arcade','🏄','Steer through ocean hazards in a three-course surfing time trial.','edgeSurf','Use ← / → or A / D to steer around hazards. Hold ↑ / W to boost. On touch screens, swipe to steer and use the boost button.']);
 
 export const categories = ['All','Reaction','Memory','Accuracy','Math','Vision','Speed','Luck','Logic','Arcade','Fun'];
-export const games = core.map(([id,title,category,icon,description,mode,instructions],i)=>({id,title,category,icon,description,mode,instructions,difficulty:'Normal',accent:['#5fe5ff','#a696ff','#7ee7e4','#609bff'][i%4],featured:i<8}));
+export const games = core.map(([id,title,category,icon,description,mode,instructions],i)=>({id,title,category,icon,description,mode,instructions,difficulty:'Normal',accent:['#5fe5ff','#a696ff','#7ee7e4','#609bff'][i%4],featured:i<8,popular:id==='edge-surf'}));
 export const gameById = id => games.find(game=>game.id===id);
