@@ -7,6 +7,7 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 const output = resolve(root, 'dist');
 const files = [
   'index.html',
+  'ads.txt',
   'styles.css',
   'manifest.webmanifest',
   'robots.txt',
